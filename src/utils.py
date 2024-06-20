@@ -19,6 +19,8 @@ from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.warp import reproject
 from rasterio.windows import Window, transform as rio_window_transform
+from rasterio.windows import from_bounds
+from rasterio.transform import Affine
 from rasterio.features import rasterize
 from rasterio.transform import from_origin
 from rasterio.features import rasterize
@@ -29,6 +31,7 @@ import dask.array as da
 from dask.delayed import delayed
 
 from osgeo import gdal, ogr, osr
+
 
 def rasterize_vector_to_raster(
     vector_data, 
@@ -120,3 +123,54 @@ def rasterize_vector_to_raster(
             window = Window(col_off, row_off, window_width, window_height)
             
             dst.write(result, window=window, indexes=1)
+
+def rescale_and_clip_to_target(input_raster_path, target_raster_path, output_raster_path, compression):
+    """
+    Rescale a raster to match the resolution and clip it to the extent of another raster.
+
+    Parameters:
+    - input_raster_path: str, path to the input raster file (e.g., 'path/to/input_raster.tif')
+    - target_raster_path: str, path to the target raster file (e.g., 'path/to/target_raster.tif')
+    - output_raster_path: str, path to the output raster file (e.g., 'path/to/output_raster.tif')
+    - compression: str, compression type (e.g., 'zstd', 'deflate', 'lwz')
+    """
+    
+    with rasterio.open(target_raster_path) as target_src:
+        # Get the extent and resolution of the target raster
+        target_extent = target_src.bounds
+        target_resolution = target_src.res[0]  # Assuming square pixels
+    
+    with rasterio.open(input_raster_path) as src:
+        # Ensure the data type is uint16
+        if src.dtypes[0] != 'int16':
+            raise ValueError("Input raster is not of type int16")
+        
+        # Calculate the new transform and dimensions for the target extent
+        new_transform = Affine(target_resolution, 0, target_extent.left, 0, -target_resolution, target_extent.top)
+        new_width = int((target_extent.right - target_extent.left) / target_resolution)
+        new_height = int((target_extent.top - target_extent.bottom) / target_resolution)
+        
+        # Read the data, resampling and clipping as necessary
+        window = from_bounds(*target_extent, transform=src.transform)
+        data = src.read(
+            out_shape=(src.count, new_height, new_width),
+            window=window,
+            resampling=Resampling.nearest
+        )
+        
+        # Update metadata
+        profile = src.profile
+        profile.update({
+            'transform': new_transform,
+            'width': new_width,
+            'height': new_height,
+            'res': (target_resolution, target_resolution),
+            'dtype': 'int16',
+            'compress': f'{compression}'
+        })
+        
+        # Write the resampled and clipped data to a new file
+        with rasterio.open(output_raster_path, 'w', **profile) as dst:
+            dst.write(data.astype('int16'))
+
+
