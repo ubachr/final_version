@@ -249,7 +249,7 @@ def plot_raster_histogram(raster_paths):
             Min_ls.append(min_val)
             Max_ls.append(max_val)
             Mean_ls.append(mean_val)
-            Std_ls.append(Std_ls)
+            Std_ls.append(std_val)
     data_dict = {
     'sos_eos': SOS_EOS_ls,
     'Year': Year_ls,
