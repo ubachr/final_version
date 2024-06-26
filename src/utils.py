@@ -261,3 +261,4 @@ def plot_raster_histogram(raster_paths):
     }
     df = pd.DataFrame(data_dict)   
     return     df
+    
