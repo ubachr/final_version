@@ -32,6 +32,11 @@ from dask.delayed import delayed
 
 from osgeo import gdal, ogr, osr
 
+import seaborn as sns
+
+
+
+
 
 def rasterize_vector_to_raster(
     vector_data, 
@@ -173,4 +178,86 @@ def rescale_and_clip_to_target(input_raster_path, target_raster_path, output_ras
         with rasterio.open(output_raster_path, 'w', **profile) as dst:
             dst.write(data.astype('int16'))
 
+def get_raster_paths(folder_path, extension='tif'):
+    """
+    Get a list of raster file paths from a folder.
 
+    Parameters:
+    - folder_path: str, path to the folder containing raster files.
+    - extension: str, extension of raster files to look for (default is 'tif').
+
+    Returns:
+    - List of file paths with the specified extension.
+    """
+    raster_paths = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith(f'.{extension}'):
+            raster_paths.append(os.path.join(folder_path, filename))
+    return raster_paths
+
+def plot_raster_histogram(raster_paths):
+    """
+    Plot histogram of raster values for multiple rasters and capture raster 
+    values distribution information.
+
+    Parameters:
+    - raster_paths: list of str, paths to the raster files.
+    """
+    SOS_EOS_ls = []
+    Year_ls = []
+    Season_ls = []
+    Min_ls = []
+    Max_ls = []
+    Mean_ls = []
+    Std_ls = []
+
+    for raster_path in raster_paths:
+        # List raster info from raster name
+        raster_info = os.path.basename(raster_path).split('_') 
+        
+        with rasterio.open(raster_path) as src:
+            # Open the raster file         
+            raster = src.read(1)  # Read the first band
+            raster_flat = raster.flatten()
+
+            # Filter nodata values
+            raster_filtered = raster_flat[raster_flat > 0]
+
+            # Calculate mean and standard deviation
+            mean_val = np.mean(raster_filtered)
+            std_val = np.std(raster_filtered)
+            min_val = np.min(raster_filtered)
+            max_val = np.max(raster_filtered)
+
+            # Plot the histogram
+            plt.hist(raster_filtered, bins=50, color='cadetblue', edgecolor='black')
+            plt.title(f'Histogram of Raster Values for {raster_info[0]} year {raster_info[3]} - {raster_info[4]}')
+            plt.xlabel('Raster Value')
+            plt.ylabel('Frequency')
+
+            # Add mean and standard deviation text
+            plt.text(0.95, 0.95, f'Mean: {mean_val:.2f}\nStd: {std_val:.2f}\nMin: {min_val:.2f}\nMax: {max_val:.2f}',
+                    verticalalignment='top', horizontalalignment='right',
+                    transform=plt.gca().transAxes,
+                    color='darkslategrey', fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+
+            plt.show()
+            
+            SOS_EOS_ls.append(raster_info[0])
+            Year_ls.append(raster_info[3])
+            Season_ls.append(raster_info[4])
+            Min_ls.append(min_val)
+            Max_ls.append(max_val)
+            Mean_ls.append(mean_val)
+            Std_ls.append(Std_ls)
+    data_dict = {
+    'sos_eos': SOS_EOS_ls,
+    'Year': Year_ls,
+    'Season': Season_ls,
+    'Min_val': Min_ls,
+    'Max_val': Max_ls,
+    'Mean_val': Mean_ls,
+    'Std_val':Std_ls
+    }
+    df = pd.DataFrame(data_dict)   
+    return     df
