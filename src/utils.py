@@ -257,8 +257,7 @@ def plot_raster_histogram(raster_paths):
     'Min_val': Min_ls,
     'Max_val': Max_ls,
     'Mean_val': Mean_ls,
-    'Std_val':Std_ls
-    }
+    'Std_val':Std_ls}
     df = pd.DataFrame(data_dict)   
     return     df
-    
+
