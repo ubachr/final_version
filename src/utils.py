@@ -34,8 +34,11 @@ from osgeo import gdal, ogr, osr
 
 import seaborn as sns
 
-
-
+# Functions to ease computation of wildfires data - LIST:
+#1 rasterize_vector_to_raster
+#2 rescale_and_clip_to_target
+#3 get_raster_paths
+#4 plot_raster_histogram
 
 
 def rasterize_vector_to_raster(
