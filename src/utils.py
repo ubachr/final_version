@@ -33,12 +33,14 @@ from dask.delayed import delayed
 from osgeo import gdal, ogr, osr
 
 import seaborn as sns
+import zipfile
 
 # Functions to ease computation of wildfires data - LIST:
 #1 rasterize_vector_to_raster
 #2 rescale_and_clip_to_target
 #3 get_raster_paths
 #4 plot_raster_histogram
+#5 zip_file_without_structure(file_path, output_folder)
 
 
 def rasterize_vector_to_raster(
@@ -264,3 +266,22 @@ def plot_raster_histogram(raster_paths):
     df = pd.DataFrame(data_dict)   
     return     df
 
+
+
+
+def zip_file_without_structure(file_path, output_folder):
+    # Get the file name without extension
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+    
+    # Create the output folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Path to the new zip file
+    zip_file_path = os.path.join(output_folder, f"{file_name}.zip")
+    
+    # Create a zip file with the same name as the file
+    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # Write the file to the zip archive without any folder structure
+        zipf.write(file_path, arcname=os.path.basename(file_path))
+
+    print(f"{file_path} has been zipped without folder structure and stored at {zip_file_path}")
