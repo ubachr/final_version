@@ -267,21 +267,12 @@ def plot_raster_histogram(raster_paths):
     return     df
 
 
+def zip_files_without_structure(folder_path, zip_file_name):
+    with zipfile.ZipFile(zip_file_name, 'w') as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                # Create the full filepath by joining root and file
+                full_path = os.path.join(root, file)
+                # Add file to zip, but only with its name, not the full path
+                zipf.write(full_path, arcname=file)
 
-
-def zip_file_without_structure(file_path, output_folder):
-    # Get the file name without extension
-    file_name = os.path.splitext(os.path.basename(file_path))[0]
-    
-    # Create the output folder if it doesn't exist
-    os.makedirs(output_folder, exist_ok=True)
-
-    # Path to the new zip file
-    zip_file_path = os.path.join(output_folder, f"{file_name}.zip")
-    
-    # Create a zip file with the same name as the file
-    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        # Write the file to the zip archive without any folder structure
-        zipf.write(file_path, arcname=os.path.basename(file_path))
-
-    print(f"{file_path} has been zipped without folder structure and stored at {zip_file_path}")
