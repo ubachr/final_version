@@ -40,7 +40,7 @@ import zipfile
 #2 rescale_and_clip_to_target
 #3 get_raster_paths
 #4 plot_raster_histogram
-#5 zip_file_without_structure(file_path, output_folder)
+#5 zip_files_without_structure(file_path, output_folder)
 
 
 def rasterize_vector_to_raster(
@@ -275,4 +275,5 @@ def zip_files_without_structure(folder_path, zip_file_name):
                 full_path = os.path.join(root, file)
                 # Add file to zip, but only with its name, not the full path
                 zipf.write(full_path, arcname=file)
+
 
